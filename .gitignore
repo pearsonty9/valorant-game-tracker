@@ -1,0 +1,9 @@
+venv/
+dist/
+build/
+test/
+
+__pycache__/
+
+main.spec
+*secret*
