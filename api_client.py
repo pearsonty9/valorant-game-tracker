@@ -1,4 +1,5 @@
 import os
+import re
 from pathlib import Path
 
 from googleapiclient.discovery import build
@@ -7,7 +8,7 @@ from googleapiclient.http import MediaFileUpload
 
 # FIle should be refactored into using a class and have authentication be done on initialization
 
-def get_sheets_data(credentials, spreadsheetId, range):
+def get_sheet_data(credentials, spreadsheetId, range):
     with build('sheets', 'v4', credentials=credentials) as service:
         spreadsheets = service.spreadsheets()
         response = spreadsheets.values().get(spreadsheetId=spreadsheetId, range=range).execute()
@@ -15,10 +16,20 @@ def get_sheets_data(credentials, spreadsheetId, range):
 
         return rows
     
+def update_sheet_data(credentials, spreadsheetId, range, data):
+    value_input_options="USER_ENTERED"
+
+    with build('sheets', 'v4', credentials=credentials) as service:
+        spreadsheets = service.spreadsheets()
+        response = spreadsheets.values().update(
+            spreadsheetId=spreadsheetId, 
+            range=range, 
+            valueInputOption=value_input_options, 
+            body={ "values": data }
+        ).execute()
+        return response
+    
 def append_sheet_data(credentials, spreadsheetId, range, data):
-    body = {
-        "values": data    
-    }
     value_input_options="USER_ENTERED"
 
     with build('sheets', 'v4', credentials=credentials) as service:
@@ -27,15 +38,26 @@ def append_sheet_data(credentials, spreadsheetId, range, data):
             spreadsheetId=spreadsheetId, 
             range=range, 
             valueInputOption=value_input_options, 
-            body=body).execute()
+            body={ "values": data }
+        ).execute()
+        return response
     
+def get_last_row_from_spreadsheet(credentials, spreadsheetId):
+    response = append_sheet_data(credentials, spreadsheetId, "Episode 8 Act 1", [])
+    p = re.compile('^.*![A-Z]+\\d+:([A-Z]+)(\\d+)$')
+    match = p.match(response['tableRange'])
+    lastcolumn = match.group(1)
+    lastrow = match.group(2)
+    response = get_sheet_data(credentials, spreadsheetId, f"A${lastrow}:${lastcolumn}${lastrow}")
+    return response[0]
+
 def upload_to_youtube(credentials, video_path, title, description, privacyStatus):
     api_service_name = "youtube"
     api_version = "v3"
     youtube = build(api_service_name, api_version, credentials=credentials)
 
     request = youtube.videos().insert(
-        part="",
+        part="snippet, status",
         body={
             "snippet": {
                 "title": title,
@@ -46,8 +68,7 @@ def upload_to_youtube(credentials, video_path, title, description, privacyStatus
         media_body=MediaFileUpload(video_path)
     )
     response = request.execute()
-
-    print(response)
+    return response
 
 def authenticate_client_user():
     scopes = ["https://www.googleapis.com/auth/youtube.readonly", "https://www.googleapis.com/auth/youtube.upload", "https://www.googleapis.com/auth/spreadsheets"]
