@@ -5,14 +5,15 @@ from games import get_game_data, get_video_title
 from api_client import append_sheet_data, authenticate_client_user, get_last_row_from_spreadsheet, update_sheet_data, initialize_upload
 
 SPREADSHEET_ID = "1oV42lMxnIw2hfBfezyqv60j4Ps6Dfze_lvJWd9rz0Kw"
+SPEADSHEET_NAME = "Episode 8 Act 1"
 
 if __name__ == '__main__':
     credentials = authenticate_client_user()
     
     while (True):
-        previous_game_metadata = get_last_row_from_spreadsheet(credentials, "1oV42lMxnIw2hfBfezyqv60j4Ps6Dfze_lvJWd9rz0Kw")
+        previous_game_metadata = get_last_row_from_spreadsheet(credentials, SPREADSHEET_ID)
         game_metadata = get_game_data(previous_game_metadata)
-        inserted_data_response = append_sheet_data(credentials, "1oV42lMxnIw2hfBfezyqv60j4Ps6Dfze_lvJWd9rz0Kw", "Episode 8 Act 1", [game_metadata])
+        inserted_data_response = append_sheet_data(credentials, SPREADSHEET_ID, SPEADSHEET_NAME, [game_metadata])
         # Find video file to upload
         files = get_file_paths("d:\\GameReplays")
         most_recent_video = files[-1]
