@@ -29,6 +29,8 @@ RETRIABLE_STATUS_CODES = [500, 502, 503, 504]
 
 # File should be refactored into using a class and have authentication be done on initialization
 
+SPEADSHEET_NAME = "Episode 8 Act 2"
+
 def get_sheet_data(credentials, spreadsheetId, range):
     with build('sheets', 'v4', credentials=credentials) as service:
         spreadsheets = service.spreadsheets()
@@ -64,7 +66,7 @@ def append_sheet_data(credentials, spreadsheetId, range, data):
         return response
     
 def get_last_row_from_spreadsheet(credentials, spreadsheetId):
-    response = append_sheet_data(credentials, spreadsheetId, "Episode 8 Act 1", [])
+    response = append_sheet_data(credentials, spreadsheetId, SPEADSHEET_NAME, [])
     p = re.compile('^.*![A-Z]+\\d+:([A-Z]+)(\\d+)$')
     match = p.match(response['tableRange'])
     lastcolumn = match.group(1)
@@ -96,38 +98,38 @@ def initialize_upload(credentials, options):
 # This method implements an exponential backoff strategy to resume a
 # failed upload.
 def resumable_upload(request):
-  response = None
-  error = None
-  retry = 0
-  while response is None:
-    try:
-      print('Uploading file...')
-      status, response = request.next_chunk()
-      if response is not None:
-        if 'id' in response:
-          print('Video id "%s" was successfully uploaded.' % response['id'])
-          return response['id']
-        else:
-          exit('The upload failed with an unexpected response: %s' % response)
-    except HttpError as e:
-      if e.resp.status in RETRIABLE_STATUS_CODES:
-        error = 'A retriable HTTP error %d occurred:\n%s' % (e.resp.status,
-                                                             e.content)
-      else:
-        raise
-    except RETRIABLE_EXCEPTIONS as e:
-      error = 'A retriable error occurred: %s' % e
+    response = None
+    error = None
+    retry = 0
+    while response is None:
+        try:
+            print('Uploading file...')
+            status, response = request.next_chunk()
+            if response is not None:
+                if 'id' in response:
+                    print('Video id "%s" was successfully uploaded.' % response['id'])
+                    return response
+            else:
+                exit('The upload failed with an unexpected response: %s' % response)
+        except HttpError as e:
+            if e.resp.status in RETRIABLE_STATUS_CODES:
+                error = 'A retriable HTTP error %d occurred:\n%s' % (e.resp.status,
+                                                                    e.content)
+            else:
+                raise
+        except RETRIABLE_EXCEPTIONS as e:
+            error = 'A retriable error occurred: %s' % e
 
     if error is not None:
-      print(error)
-      retry += 1
-      if retry > MAX_RETRIES:
-        exit('No longer attempting to retry.')
+        print(error)
+        retry += 1
+        if retry > MAX_RETRIES:
+            exit('No longer attempting to retry.')
 
-      max_sleep = 2 ** retry
-      sleep_seconds = random.random() * max_sleep
-      print('Sleeping %f seconds and then retrying...' % sleep_seconds)
-      time.sleep(sleep_seconds)
+        max_sleep = 2 ** retry
+        sleep_seconds = random.random() * max_sleep
+        print('Sleeping %f seconds and then retrying...' % sleep_seconds)
+        time.sleep(sleep_seconds)
 
 def authenticate_client_user():
     SCOPES = ["https://www.googleapis.com/auth/youtube.readonly", "https://www.googleapis.com/auth/youtube.upload", "https://www.googleapis.com/auth/spreadsheets"]

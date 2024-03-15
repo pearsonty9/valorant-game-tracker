@@ -57,9 +57,10 @@ def get_game_data(default_values):
     rank = input(f"What is your current rank? [{default_values[4]}]: ")
     if rank == "":
         rank = default_values[4]
-    rr = input(f"What is your current RR? [{int(default_values[5])+int(default_values[6])}]: ")
+    previousRR = int(default_values[5])+int(default_values[6]) if default_values[5].isnumeric() and default_values[6].isnumeric() else 0
+    rr = input(f"What is your current RR? [{previousRR}]: ")
     if rr == "":
-        rr = int(default_values[5])+int(default_values[6])
+        rr = previousRR
     rrDelta = input(f"Change in RR?: ")
     group = input(f"Who did you play with? [{default_values[7]}]: ")
     if group == "":

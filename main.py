@@ -5,7 +5,7 @@ from games import get_game_data, get_video_title
 from api_client import append_sheet_data, authenticate_client_user, get_last_row_from_spreadsheet, update_sheet_data, initialize_upload
 
 SPREADSHEET_ID = "1oV42lMxnIw2hfBfezyqv60j4Ps6Dfze_lvJWd9rz0Kw"
-SPEADSHEET_NAME = "Episode 8 Act 1"
+SPEADSHEET_NAME = "Episode 8 Act 2"
 
 if __name__ == '__main__':
     credentials = authenticate_client_user()
@@ -21,11 +21,11 @@ if __name__ == '__main__':
         title = get_video_title(game_metadata)
         # Upload video to youtube
         if game_metadata[-1] == "Yes":
-            response = input(f'Upload \033[1m{most_recent_video}\033[0m with title "\033[1m{title}\033[0m" (y/n): ')
+            response = input(f'Upload \033[1m{most_recent_video}\033[0m with title "\033[1m{title}\033[0m" (y/N): ')
             if response == "y":
                 try:
                     print("Uploading video to YouTube...")                
-                    upload_response = initialize_upload(credentials, {"title": title, "description": "", "file": most_recent_video, "privacyStatus": "private"})
+                    upload_response = initialize_upload(credentials, {"title": title, "description": "", "file": most_recent_video, "privacyStatus": "unlisted"})
                 except Exception as e:
                     print('An HTTP error %d occurred:\n%s' % (e.resp.status, e.content))
                 # Update game data spreadsheet with video link 
@@ -33,4 +33,4 @@ if __name__ == '__main__':
                 match = p.match(inserted_data_response["tableRange"])
                 lastcolumn = match.group(1)
                 lastrow = match.group(2)
-                update_sheet_data(credentials, SPREADSHEET_ID, f"{chr(ord(lastcolumn) - 3)}{int(lastrow)+1}", [[f"https://youtu.be/{upload_response["id"]}"]])  
+                update_sheet_data(credentials, SPREADSHEET_ID, f"{chr(ord(lastcolumn) - 3)}{int(lastrow)+1}", [[f"https://youtu.be/{upload_response["id"]}"]])
